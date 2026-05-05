@@ -1,5 +1,4 @@
 const prisma = require('../db');
-const bcrypt = require('bcrypt');
 
 module.exports = {
   getAll: async () => {
@@ -13,23 +12,6 @@ module.exports = {
       where: { id: Number(id) },
       omit: { password: true },
     });
-  },
-
-  create: async ({ name, email, password }) => {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    try {
-      return await prisma.user.create({
-        data: { name, email, password: hashedPassword },
-        omit: { password: true },
-      });
-    } catch (err) {
-      if (err.code === 'P2002') {
-        const error = new Error('Email already in use');
-        error.status = 409;
-        throw error;
-      }
-      throw err;
-    }
   },
 
   update: async (id, { name, email }) => {

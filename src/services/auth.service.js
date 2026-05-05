@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const prisma = require('../db');
+const env = require('../config/env');
 
 module.exports = {
   register: async ({ name, email, password }) => {
@@ -11,11 +12,20 @@ module.exports = {
       throw error;
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword },
-      omit: { password: true },
-    });
-    return user;
+    try {
+      const user = await prisma.user.create({
+        data: { name, email, password: hashedPassword },
+        omit: { password: true },
+      });
+      return user;
+    } catch (err) {
+      if (err.code === 'P2002') {
+        const error = new Error('Email already in use');
+        error.status = 409;
+        throw error;
+      }
+      throw err;
+    }
   },
 
   login: async ({ email, password }) => {
@@ -32,8 +42,8 @@ module.exports = {
       throw error;
     }
     const token = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET,
+      { userId: user.id, role: user.role },
+      env.JWT_SECRET,
       { expiresIn: '7d' },
     );
     return { token };

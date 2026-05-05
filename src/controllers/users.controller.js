@@ -27,13 +27,6 @@ module.exports = {
     } catch (err) { next(err); }
   },
 
-  create: async (req, res, next) => {
-    try {
-      const user = await usersService.create(req.body);
-      res.status(201).json(user);
-    } catch (err) { next(err); }
-  },
-
   update: async (req, res, next) => {
     try {
       if (Number(req.params.id) !== Number(req.userId)) {
